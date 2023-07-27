@@ -1,29 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:notes_app/common/constant/app_dimens.dart';
-import 'package:notes_app/modules/features/note/view_model/note_view_model.dart';
 import 'package:notes_app/theme/app_theme.dart';
-import 'package:provider/provider.dart';
 
-class CreateNotesView extends StatefulWidget {
-  const CreateNotesView({
-    super.key,
-  });
+class NoteEditPage extends StatefulWidget {
+  final String noteText;
+  final String noteId;
+
+  NoteEditPage({required this.noteText, required this.noteId});
 
   @override
-  State<CreateNotesView> createState() => _CreateNotesViewState();
+  _NoteEditPageState createState() => _NoteEditPageState();
 }
 
-class _CreateNotesViewState extends State<CreateNotesView> {
+class _NoteEditPageState extends State<NoteEditPage> {
+  TextEditingController textEditingController = TextEditingController();
+
   @override
   void initState() {
-    Provider.of<NoteViewModel>(context, listen: false);
     super.initState();
+    textEditingController.text = widget.noteText;
   }
 
   @override
   Widget build(BuildContext context) {
-    TextEditingController createNoteController = TextEditingController();
-    final noteData = Provider.of<NoteViewModel>(context);
+    DateTime currentDateTime = DateTime.now().toLocal();
+    int currentTimeStamp = currentDateTime.millisecondsSinceEpoch;
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -33,7 +35,20 @@ class _CreateNotesViewState extends State<CreateNotesView> {
             padding: const EdgeInsets.only(top: 20.0, right: 12),
             child: InkWell(
               onTap: () {
-                noteData.addDataToFirebase(createNoteController.text);
+                FirebaseFirestore.instance
+                    .collection('notelist')
+                    .doc(widget.noteId)
+                    .update({
+                  'notes': textEditingController.text,
+                  'created_date': currentTimeStamp
+                }).then((value) {
+                  Navigator.pop(context);
+                }).catchError((error) {
+                  // Handle error
+                  print('Error updating note: $error');
+                });
+                textEditingController.clear();
+                FocusScope.of(context).unfocus();
               },
               child: Text(
                 "Done",
@@ -43,20 +58,14 @@ class _CreateNotesViewState extends State<CreateNotesView> {
             ),
           ),
         ],
-        title: Text(
-          "Notes",
-          style: Theme.of(context)
-              .textTheme
-              .bodyMedium
-              ?.copyWith(color: primaryColor, fontWeight: FontWeight.normal),
-        ),
       ),
       body: Padding(
         padding: AppDimens.mainPagePadding,
-        child: TextFormField(
-          controller: createNoteController,
+        child: TextField(
+          controller: textEditingController,
           cursorColor: primaryColor,
           cursorHeight: 30,
+          maxLines: null,
           decoration: InputDecoration(
             focusedBorder: const OutlineInputBorder(
                 borderSide: BorderSide(color: Colors.transparent)),
