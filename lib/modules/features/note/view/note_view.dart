@@ -4,15 +4,42 @@ import 'package:notes_app/common/constant/app_dimens.dart';
 import 'package:notes_app/common/constant/ui_helpers.dart';
 import 'package:notes_app/common/widget/k_textformfield.dart';
 import 'package:notes_app/core/app/app_routes.dart';
-import 'package:notes_app/modules/features/note/view/widgets/note_edit_view.dart';
+import 'package:notes_app/modules/features/note/view_model/note_view_model.dart';
 import 'package:notes_app/theme/app_theme.dart';
+import 'package:provider/provider.dart';
 
 class NoteView extends StatelessWidget {
   const NoteView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    TextEditingController noteController = TextEditingController();
+    final states = Provider.of<NoteViewModel>(context);
+
+    kShowBottomSheet(String noteid) {
+      showModalBottomSheet(
+        context: context,
+        builder: (context) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              ListTile(
+                leading: Icon(
+                  Icons.delete,
+                  color: errorColor,
+                ),
+                title: const Text('Delete note'),
+                onTap: () {
+                  states.deleteNoteFromFirebase(noteid);
+
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          );
+        },
+      );
+    }
+
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -28,9 +55,11 @@ class NoteView extends StatelessWidget {
                     ?.copyWith(fontSize: AppDimens.headlineFontSizeMedium),
               ),
               sHeightSpan,
-              const KTextFormField(
-                hint: "Search",
-                prefixIcon: Icon(
+              KTextFormField(
+                cursorColor: primaryColor,
+                hintText: "Search",
+                focusColor: disabledColor,
+                prefixIcon: const Icon(
                   Icons.search,
                   color: disabledColor,
                 ),
@@ -61,19 +90,27 @@ class NoteView extends StatelessWidget {
                             data?[index]['created_date'].toString() ?? '';
 
                         return GestureDetector(
+                          onLongPress: () {
+                            kShowBottomSheet(noteid);
+                          },
                           onTap: () {
-                            Navigator.pushNamed(context, AppRoutes.editNote,
-                                arguments: {
-                                  'noteid': noteid,
-                                  'noteText': note,
-                                });
-                                
-
-                           
+                            Navigator.pushNamed(
+                              context,
+                              AppRoutes.editNote,
+                              arguments: {
+                                'noteid': noteid,
+                                'noteText': note,
+                              },
+                            );
                           },
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              Text(
+                                states.formatTimeAgoFromTimestamp(
+                                  int.parse(createdData),
+                                ),
+                              ),
                               SizedBox(
                                 height: 100,
                                 width: 100,
@@ -81,11 +118,14 @@ class NoteView extends StatelessWidget {
                                   color: secondaryColor,
                                   child: Padding(
                                     padding: const EdgeInsets.all(8),
-                                    child: Text(note),
+                                    child: Text(
+                                      note,
+                                    ),
                                   ),
                                 ),
                               ),
-                              Text(createdData),
+                              mHeightSpan,
+                              sHeightSpan,
                             ],
                           ),
                         );
@@ -98,13 +138,6 @@ class NoteView extends StatelessWidget {
               Container(
                 color: secondaryColor,
                 child: ListTile(
-                  title: Text(
-                    "12 notes",
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyMedium
-                        ?.copyWith(fontWeight: FontWeight.normal),
-                  ),
                   trailing: InkWell(
                     onTap: () {
                       Navigator.pushNamed(context, AppRoutes.createNote);

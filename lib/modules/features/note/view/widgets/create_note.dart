@@ -4,6 +4,8 @@ import 'package:notes_app/modules/features/note/view_model/note_view_model.dart'
 import 'package:notes_app/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../../common/widget/k_textformfield.dart';
+
 class CreateNotesView extends StatefulWidget {
   const CreateNotesView({
     super.key,
@@ -34,6 +36,7 @@ class _CreateNotesViewState extends State<CreateNotesView> {
             child: InkWell(
               onTap: () {
                 noteData.addDataToFirebase(createNoteController.text);
+                Navigator.pop(context);
               },
               child: Text(
                 "Done",
@@ -53,24 +56,13 @@ class _CreateNotesViewState extends State<CreateNotesView> {
       ),
       body: Padding(
         padding: AppDimens.mainPagePadding,
-        child: TextFormField(
-          controller: createNoteController,
-          cursorColor: primaryColor,
-          cursorHeight: 30,
-          decoration: InputDecoration(
-            focusedBorder: const OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.transparent)),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-            ),
-            enabledBorder: const OutlineInputBorder(
-              borderSide: BorderSide(
-                color: Colors.transparent,
-              ),
-            ),
-          ),
-          style: const TextStyle(color: Colors.white),
-        ),
+        child: KTextFormField(
+            autoFocus: true,
+            controller: createNoteController,
+            cursorColor: primaryColor,
+            cursorHeight: 30,
+            focusColor: Colors.transparent,
+          )
       ),
     );
   }

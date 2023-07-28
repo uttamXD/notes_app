@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:notes_app/common/constant/app_dimens.dart';
+import 'package:notes_app/common/widget/k_textformfield.dart';
+import 'package:notes_app/modules/features/note/view_model/note_view_model.dart';
 import 'package:notes_app/theme/app_theme.dart';
+import 'package:provider/provider.dart';
 
-class NoteEditPage extends StatefulWidget {
+class NoteEditView extends StatefulWidget {
   final String noteText;
   final String noteId;
 
-  NoteEditPage({required this.noteText, required this.noteId});
+  const NoteEditView({super.key, required this.noteText, required this.noteId});
 
   @override
-  _NoteEditPageState createState() => _NoteEditPageState();
+  _NoteEditViewState createState() => _NoteEditViewState();
 }
 
-class _NoteEditPageState extends State<NoteEditPage> {
+class _NoteEditViewState extends State<NoteEditView> {
   TextEditingController textEditingController = TextEditingController();
 
   @override
@@ -24,8 +26,7 @@ class _NoteEditPageState extends State<NoteEditPage> {
 
   @override
   Widget build(BuildContext context) {
-    DateTime currentDateTime = DateTime.now().toLocal();
-    int currentTimeStamp = currentDateTime.millisecondsSinceEpoch;
+    final state = Provider.of<NoteViewModel>(context);
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -35,18 +36,8 @@ class _NoteEditPageState extends State<NoteEditPage> {
             padding: const EdgeInsets.only(top: 20.0, right: 12),
             child: InkWell(
               onTap: () {
-                FirebaseFirestore.instance
-                    .collection('notelist')
-                    .doc(widget.noteId)
-                    .update({
-                  'notes': textEditingController.text,
-                  'created_date': currentTimeStamp
-                }).then((value) {
-                  Navigator.pop(context);
-                }).catchError((error) {
-                  // Handle error
-                  print('Error updating note: $error');
-                });
+                state.editNoteFromFirebase(
+                    widget.noteId, textEditingController.text, context);
                 textEditingController.clear();
                 FocusScope.of(context).unfocus();
               },
@@ -60,27 +51,14 @@ class _NoteEditPageState extends State<NoteEditPage> {
         ],
       ),
       body: Padding(
-        padding: AppDimens.mainPagePadding,
-        child: TextField(
-          controller: textEditingController,
-          cursorColor: primaryColor,
-          cursorHeight: 30,
-          maxLines: null,
-          decoration: InputDecoration(
-            focusedBorder: const OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.transparent)),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-            ),
-            enabledBorder: const OutlineInputBorder(
-              borderSide: BorderSide(
-                color: Colors.transparent,
-              ),
-            ),
-          ),
-          style: const TextStyle(color: Colors.white),
-        ),
-      ),
+          padding: AppDimens.mainPagePadding,
+          child: KTextFormField(
+            autoFocus: true,
+            controller: textEditingController,
+            cursorColor: primaryColor,
+            cursorHeight: 30,
+            focusColor: Colors.transparent,
+          )),
     );
   }
 }
